@@ -2,6 +2,7 @@ package com.controller;
 
 
 import com.dto.UserDto;
+import com.exception.UserAlreadyRegisterException;
 import com.exception.UserNotFoundException;
 import com.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ public class UserController {
     private UserServiceImpl userServiceImpl;
 
     @PostMapping("/register")
-    public void register(@RequestBody UserDto userDto) throws UserNotFoundException {
+    public void register(@RequestBody UserDto userDto) throws UserAlreadyRegisterException {
         userServiceImpl.register(userDto);
     }
 }
