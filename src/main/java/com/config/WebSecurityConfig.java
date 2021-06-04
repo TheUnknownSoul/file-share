@@ -19,7 +19,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     UserDetailServiceImpl userDetailService;
 
     protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.authorizeRequests()
+        httpSecurity
+                .authorizeRequests()
                 .antMatchers("/register").permitAll()
                 .anyRequest().authenticated()
                 .and()
