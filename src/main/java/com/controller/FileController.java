@@ -1,7 +1,6 @@
 package com.controller;
 
 
-import com.dto.SharedFileDto;
 import com.dto.UserDto;
 import com.dto.UserFilesDto;
 import com.exception.UserNotFoundException;
@@ -39,13 +38,13 @@ public class FileController {
     }
 
     @PostMapping("/file")
-    public String uploadFile(MultipartFile uploadedFile, String ownerEmail) throws IOException, UserNotFoundException {
-        return sharingService.uploadFile(uploadedFile, ownerEmail);
+    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile, Principal ownerEmail) throws IOException, UserNotFoundException {
+        return sharingService.uploadFile(uploadedFile, ownerEmail.getName());
     }
 
     @PostMapping("/share")
-    public void shareFile(@RequestBody SharedFileDto fileDto) {
-        sharingService.shareFile(fileDto);
+    public void shareFile(@RequestParam("email") String email, @RequestParam("fileId") String fileId) throws UserNotFoundException {
+        sharingService.shareFile(email, fileId);
 
     }
 }

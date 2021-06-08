@@ -4,12 +4,10 @@ import com.entity.File;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
-public interface FileRepository extends JpaRepository<File, Long> {
-    Optional<File> findById(Long id);
+public interface FileRepository extends JpaRepository<File, Integer> {
+    File findByFileId(Integer id);
 
-    Optional<File> findByName(String name);
+    File findByName(String name);
 
 }

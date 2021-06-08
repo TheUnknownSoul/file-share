@@ -22,12 +22,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
+@Table(name = "USERS")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @NotNull
-    Long id;
+    int id;
     @NotNull
     @Column(name = "email")
     String email;

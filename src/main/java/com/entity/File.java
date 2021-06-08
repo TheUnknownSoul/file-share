@@ -13,12 +13,16 @@ import javax.persistence.*;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "FILES")
 public class File {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.AUTO)
-    Long id;
+    int fileId;
     @NotNull
     @Column(name = "name")
     String name;
+
+    @Column(name = "userEmail")
+    String userEmail;
 }
