@@ -1,6 +1,7 @@
 package com.service;
 
 
+import com.dto.SharedFileDto;
 import com.dto.UserFilesDto;
 import com.entity.File;
 import com.entity.User;
@@ -9,10 +10,10 @@ import com.repository.FileRepository;
 import com.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,13 +22,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
 
 @Service
 public class FilesSharingServiceImpl implements FileService {
 
-    @Value("${root.directory}")
-    private static Path fileStorageLocation;
+
+    private static final Path FILE_STORAGE_LOCATION = Paths.get("src/files/");
     @Autowired
     FileRepository fileRepository;
     @Autowired
@@ -38,15 +41,11 @@ public class FilesSharingServiceImpl implements FileService {
     ModelMapper modelMapper;
 
     @Override
-    public UserFilesDto getUserFiles(String email) throws FileNotFoundException, UserNotFoundException {
-        Optional<User> user = userRepository.findByEmail(email);
-        if (user.isPresent()) {
-            UserFilesDto userFilesDto = modelMapper.map(user, UserFilesDto.class);
-            if (userFilesDto != null) {
-                return userFilesDto;
-            } else {
-                throw new FileNotFoundException("Files not found");
-            }
+    public List<File> getUserFiles(String email) throws UserNotFoundException {
+        User user = userRepository.findByEmail(email);
+        UserFilesDto userFilesDto = modelMapper.map(user, UserFilesDto.class);
+        if (userFilesDto != null) {
+            return userService.findByEmail(email).getShared();
         } else {
             throw new UserNotFoundException("no such user");
         }
@@ -58,15 +57,18 @@ public class FilesSharingServiceImpl implements FileService {
     }
 
     @Override
-    public Resource downloadFileByFileId(String fileId) throws IOException {
+    public ResponseEntity<byte[]> downloadFileByFileId(String fileId) throws IOException {
+        File file = fileRepository.findByFileId(Integer.valueOf(fileId));
+        User user = userRepository.findByEmail(file.getUserEmail());
         if (fileRepository.findById(Integer.parseInt(fileId)).isPresent()) {
-            Path p1 = Paths.get("src/files/");
-//            Path filePath = p1.resolve().normalize();
-            File byFileId = fileRepository.findByFileId(Integer.valueOf(fileId));
-//            Resource resource = new UrlResource(String.valueOf(filePath));
-            Resource resource = new UrlResource(p1.normalize() + "\\"+ String.valueOf(byFileId.getName()));
-            if (resource.exists()) {
-                return resource;
+            Path p1 = Paths.get(String.valueOf(FILE_STORAGE_LOCATION));
+            if (user.getShared().contains(file)) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                        .body(Files.readAllBytes(Paths.get(p1 + "/" + file.getName())));
+            } else {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
         }
         throw new FileNotFoundException("File not found");
@@ -74,28 +76,25 @@ public class FilesSharingServiceImpl implements FileService {
 
     @Override
     public String uploadFile(MultipartFile uploadedFile, String email) throws IOException, UserNotFoundException {
-        // need to add owned
         User user = userService.findByEmail(email);
         if (Objects.equals(uploadedFile.getContentType(), MediaType.TEXT_PLAIN_VALUE)) {
-            if (userRepository.findByEmail(email).isPresent() && !uploadedFile.isEmpty()) {
+            if (userRepository.findByEmail(email) != null && !uploadedFile.isEmpty()) {
                 File file = new File();
-                java.io.File directory = new java.io.File("src/files/");
+                java.io.File directory = new java.io.File(String.valueOf(FILE_STORAGE_LOCATION));
                 if (!directory.exists()) {
                     directory.mkdir();
                 }
-
-                Path path = Files.createFile(Paths.get("src/files/" + uploadedFile.getOriginalFilename()));
+                Path path = Files.createFile(Paths.get(FILE_STORAGE_LOCATION + "/" + uploadedFile.getOriginalFilename()));
                 Files.write(path, uploadedFile.getBytes());
-
-                userRepository.findByEmail(email).get();
-                ModelMapper mapper = new ModelMapper();
                 file.setName(uploadedFile.getOriginalFilename());
                 file.setUserEmail(email);
                 file.setFileId(new Random().nextInt(1));
-                mapper.map(file, File.class);
+//                SharedFileDto map1 = modelMapper.map(file, SharedFileDto.class);
+//                System.out.println(map1.getId() + " " + map1.getName());
                 List<File> owned = user.getOwned();
                 owned.add(fileRepository.save(file));
                 user.setOwned(owned);
+                userService.save(user);
                 return String.valueOf(file.getFileId());
             }
         }
@@ -103,13 +102,21 @@ public class FilesSharingServiceImpl implements FileService {
     }
 
     @Override
-    public void shareFile(String email, String fileId) throws UserNotFoundException {
-        User user = userService.findByEmail(email);
-        File file = fileRepository.findByFileId(Integer.parseInt(fileId));
-        List<File> shared = user.getShared();
+    public void shareFile(SharedFileDto sharedFileDto) throws UserNotFoundException, com.exception.FileNotFoundException {
+        User user = userService.findByEmail(sharedFileDto.getName());
         List<File> owned = user.getOwned();
+        List<File> shared = user.getShared();
+        File file = owned.stream()
+                .filter(f -> f.getFileId() == sharedFileDto.getId())
+                .findFirst()
+                .map(f -> {
+                    owned.remove(f);
+                    return f;
+                }).orElseThrow(() -> new com.exception.FileNotFoundException("File not found"));
         shared.add(file);
-        owned.add(file);
+        user.setOwned(owned);
+        user.setShared(shared);
         userService.save(user);
+
     }
 }

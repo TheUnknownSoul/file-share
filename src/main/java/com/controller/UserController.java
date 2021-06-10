@@ -5,6 +5,7 @@ import com.dto.UserDto;
 import com.exception.UserAlreadyRegisterException;
 import com.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +18,7 @@ public class UserController {
     private UserServiceImpl userServiceImpl;
 
     @PostMapping("register")
-    public void register(@RequestBody UserDto userDto) throws UserAlreadyRegisterException {
-        userServiceImpl.register(userDto);
+    public ResponseEntity register(@RequestBody UserDto userDto) throws UserAlreadyRegisterException {
+       return userServiceImpl.register(userDto);
     }
 }
