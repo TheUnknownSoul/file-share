@@ -75,7 +75,7 @@ public class FilesSharingServiceImpl implements FileService {
     }
 
     @Override
-    public String uploadFile(MultipartFile uploadedFile, String email) throws IOException, UserNotFoundException {
+    public String uploadFile(MultipartFile uploadedFile, String email) throws IOException {
         User user = userService.findByEmail(email);
         if (Objects.equals(uploadedFile.getContentType(), MediaType.TEXT_PLAIN_VALUE)) {
             if (userRepository.findByEmail(email) != null && !uploadedFile.isEmpty()) {
@@ -89,8 +89,6 @@ public class FilesSharingServiceImpl implements FileService {
                 file.setName(uploadedFile.getOriginalFilename());
                 file.setUserEmail(email);
                 file.setFileId(new Random().nextInt(1));
-//                SharedFileDto map1 = modelMapper.map(file, SharedFileDto.class);
-//                System.out.println(map1.getId() + " " + map1.getName());
                 List<File> owned = user.getOwned();
                 owned.add(fileRepository.save(file));
                 user.setOwned(owned);
@@ -102,7 +100,7 @@ public class FilesSharingServiceImpl implements FileService {
     }
 
     @Override
-    public void shareFile(SharedFileDto sharedFileDto) throws UserNotFoundException, com.exception.FileNotFoundException {
+    public void shareFile(SharedFileDto sharedFileDto) throws com.exception.FileNotFoundException {
         User user = userService.findByEmail(sharedFileDto.getName());
         List<File> owned = user.getOwned();
         List<File> shared = user.getShared();

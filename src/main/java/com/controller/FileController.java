@@ -29,12 +29,7 @@ public class FileController {
 
     @GetMapping("/file")
     public ResponseEntity<List<File>> getUsersFiles(Principal principal) throws UserNotFoundException {
-        //need to refactor ability to check users principal
-//        if (principal.getName().equals(userService.findByEmail(principal.getName()))) {
-            return new ResponseEntity<>(sharingService.getUserFiles(principal.getName()), HttpStatus.OK);
-//        } else {
-//            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-//        }
+        return new ResponseEntity<>(sharingService.getUserFiles(principal.getName()), HttpStatus.OK);
     }
 
     @GetMapping("/file/{fileId}")
@@ -43,12 +38,12 @@ public class FileController {
     }
 
     @PostMapping("/file")
-    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile, Principal ownerEmail) throws IOException, UserNotFoundException {
+    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile, Principal ownerEmail) throws IOException {
         return sharingService.uploadFile(uploadedFile, ownerEmail.getName());
     }
 
     @PostMapping("/share")
-    public void shareFile(@RequestBody SharedFileDto sharedFileDto) throws UserNotFoundException, com.exception.FileNotFoundException {
+    public void shareFile(@RequestBody SharedFileDto sharedFileDto) throws com.exception.FileNotFoundException {
         sharingService.shareFile(sharedFileDto);
 
     }
