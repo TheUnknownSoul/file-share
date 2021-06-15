@@ -27,7 +27,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @NotNull
-    int id;
+    Integer id;
     @NotNull
     @Column(name = "email")
     String email;
@@ -35,7 +35,7 @@ public class User {
     @Column(name = "password")
     String password;
     @OneToMany
-    List<File> owned;
+    List<UserFile> owned;
     @OneToMany
-    List<File> shared;
+    List<UserFile> shared;
 }

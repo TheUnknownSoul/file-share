@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FileDto {
-    private String fileId;
+    private Integer fileId;
     private String fileName;
+    private boolean isShared;
 }

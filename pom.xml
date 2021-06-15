@@ -9,7 +9,7 @@
         <version>2.4.0</version>
     </parent>
     <groupId>groupId</groupId>
-    <artifactId>file-share</artifactId>
+    <artifactId>userFile-share</artifactId>
     <version>1.0</version>
 
     <dependencies>

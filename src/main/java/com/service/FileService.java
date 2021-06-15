@@ -1,25 +1,25 @@
 package com.service;
 
-import com.dto.SharedFileDto;
-import com.entity.File;
+import com.dto.FileDto;
+import com.dto.FilesDto;
+import com.dto.UserFilesDto;
+import com.entity.UserFile;
 import com.exception.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
+import java.security.Principal;
 
 
 public interface FileService {
-    List<File> getUserFiles(String email) throws FileNotFoundException, UserNotFoundException;
+    FilesDto getUserFiles(String email) throws Exception;
 
-    File findByFileId(int fileId) throws FileNotFoundException;
-
-    ResponseEntity downloadFileByFileId(String fileId) throws IOException;
+    ResponseEntity downloadFileByFileId(String fileId, Principal ownerEmail) throws IOException;
 
     String uploadFile(MultipartFile multipartFile, String email) throws IOException, UserNotFoundException;
 
-    void shareFile(SharedFileDto sharedFileDto) throws UserNotFoundException, com.exception.FileNotFoundException;
+    void shareFile(UserFilesDto filesDto) throws UserNotFoundException, FileNotFoundException;
 
 }

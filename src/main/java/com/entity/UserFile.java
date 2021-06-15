@@ -13,16 +13,16 @@ import javax.persistence.*;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "FILES")
-public class File {
+@Table(name = "USER_FILES")
+public class UserFile {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.AUTO)
-    int fileId;
+    Integer fileId;
     @NotNull
     @Column(name = "name")
     String name;
 
-    @Column(name = "userEmail")
-    String userEmail;
+    @Column(name = "isShared")
+    boolean isShared;
 }

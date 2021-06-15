@@ -3,6 +3,7 @@ package com.service;
 import com.dto.UserDto;
 import com.entity.User;
 import com.exception.UserAlreadyRegisterException;
+import com.exception.UserNotFoundException;
 import com.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +22,15 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    ModelMapper modelMapper;
 
 
     public ResponseEntity register(UserDto userDto) throws UserAlreadyRegisterException {
-        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmail(userDto.getEmail()));
-        if (!optionalUser.isPresent()) {
-            ModelMapper modelMapper = new ModelMapper();
+        Optional<User> optionalUser = userRepository.findByEmail(userDto.getEmail());
+        if (!optionalUser.isPresent() && userDto.getEmail() != null && !userDto.getEmail().equals("")) {
             userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-            modelMapper.validate();
+//            modelMapper.validate();
             User user = modelMapper.map(userDto, User.class);
             this.save(user);
             return new ResponseEntity<>(HttpStatus.CREATED);
@@ -43,7 +45,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public User findByEmail(String email) throws UserNotFoundException {
+
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isPresent()){
+            return user.get();
+        }
+        throw new UserNotFoundException("No such user");
     }
 }

@@ -6,7 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserFilesDto {
-    Long id;
+    Integer id;
     String name;
 
 }
