@@ -83,7 +83,7 @@ public class FilesSharingServiceImpl implements FileService {
         Optional<User> optionalUser = userRepository.findByEmail(ownerEmail.getName());
         if (fileOptional.isPresent() && optionalUser.isPresent()) {
             Path path = Paths.get(String.valueOf(FILE_STORAGE_LOCATION));
-            if (fileOptional.get().isShared() || !optionalUser.get().getOwned().isEmpty()) {
+            if (fileOptional.get().isShared() || optionalUser.get().getOwned().size() > 0) {
 
                 return ResponseEntity.ok()
                         .contentType(MediaType.TEXT_PLAIN)
@@ -130,6 +130,7 @@ public class FilesSharingServiceImpl implements FileService {
         Optional<User> optionalUser = userRepository.findByEmail(filesDto.getName());
         if (optionalUser.isPresent() && optionalFile.isPresent()) {
             optionalFile.get().setShared(true);
+            fileRepository.save(optionalFile.get());
         }
     }
 }
