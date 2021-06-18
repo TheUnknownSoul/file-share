@@ -1,6 +1,8 @@
 package com.service;
 
 import com.entity.User;
+import com.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,10 +18,13 @@ public class UserDetailServiceImpl implements UserDetailsService {
     @Autowired
     UserServiceImpl userService;
 
-    @SneakyThrows
+    @Autowired
+    UserRepository userRepository;
+
+
     @Override
     public UserDetails loadUserByUsername(String userEmail) throws UsernameNotFoundException {
-        User user = userService.findByEmail(userEmail);
+        User user = userRepository.findByEmail(userEmail).get();
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
     }
 }

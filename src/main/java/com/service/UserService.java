@@ -8,7 +8,5 @@ import org.springframework.http.ResponseEntity;
 
 
 public interface UserService {
-    ResponseEntity register(UserDto userDto) throws UserAlreadyRegisterException;
-    void save(User user);
-    User findByEmail(String email) throws UserNotFoundException;
+    boolean register(UserDto userDto);
 }

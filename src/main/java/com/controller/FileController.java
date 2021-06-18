@@ -2,52 +2,56 @@ package com.controller;
 
 
 import com.dto.FileDto;
-import com.dto.FilesDto;
-import com.dto.UserFilesDto;
-import com.entity.User;
 import com.exception.UserNotFoundException;
-import com.service.FilesSharingServiceImpl;
-import com.service.UserServiceImpl;
+import com.service.FileService;
+import com.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(value = "/api", produces = MediaType.APPLICATION_JSON_VALUE)
 public class FileController {
 
     @Autowired
-    FilesSharingServiceImpl sharingService;
+    FileService sharingService;
 
     @Autowired
-    UserServiceImpl userService;
+    UserService userService;
 
 
-    @GetMapping("/file")
-    public ResponseEntity<FilesDto> getUsersFiles( Principal principal) throws Exception {
+    @GetMapping(value = "/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<FileDto> getUsersFiles(Principal principal) throws Exception {
         return new ResponseEntity<>(sharingService.getUserFiles(principal.getName()), HttpStatus.OK);
     }
 
     @GetMapping("/file/{fileId}")
-    public ResponseEntity<byte[]> getFileById(@PathVariable String fileId,Principal principal) throws IOException {
-        return sharingService.downloadFileByFileId(fileId,principal);
+    public ResponseEntity<byte[]> getFileById(@PathVariable String fileId) throws IOException {
+        return sharingService.downloadFileByFileId(fileId);
     }
 
-    @PostMapping("/file")
-    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile,  Principal user) throws IOException, UserNotFoundException {
+    @PostMapping(value = "/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile, Principal user) throws IOException, UserNotFoundException {
         return sharingService.uploadFile(uploadedFile, user.getName());
     }
 
-    @PostMapping("/share")
+    @PostMapping(value = "/share", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public void shareFile(@RequestBody UserFilesDto filesDto) {
-        sharingService.shareFile(filesDto);
+    public void shareFile(@RequestParam(name = "name") String ownerEmail, @RequestParam(name = "id") String fileId) throws FileNotFoundException, UserNotFoundException {
+        sharingService.shareFile(ownerEmail, fileId);
 
     }
 }

@@ -1,7 +1,18 @@
 package com.exception;
 
-public class UserNotFoundException extends Exception{
-    public UserNotFoundException(String message){
-        super(message);
-    }
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.http.HttpStatus;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class UserNotFoundException extends RuntimeException {
+    private HttpStatus httpStatus;
+    private String message;
 }

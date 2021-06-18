@@ -7,11 +7,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.List;
@@ -22,20 +25,19 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "USERS")
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @NotNull
-    Integer id;
+    private Integer id;
     @NotNull
     @Column(name = "email")
-    String email;
+    private String email;
     @NotNull
     @Column(name = "password")
-    String password;
-    @OneToMany
-    List<UserFile> owned;
-    @OneToMany
-    List<UserFile> shared;
+    private String password;
+    @OneToMany(mappedBy = "user")
+//    @JoinColumn(name = "user_files")
+    private List<UserFile> owned;
 }
