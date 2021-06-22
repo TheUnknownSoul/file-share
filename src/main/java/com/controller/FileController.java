@@ -2,10 +2,12 @@ package com.controller;
 
 
 import com.dto.FileDto;
-import com.exception.UserNotFoundException;
+import com.exception.CustomException;
+import com.repository.FileRepository;
 import com.service.FileService;
 import com.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.Principal;
 
 @RestController
 @RequestMapping(value = "/api", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -32,26 +33,30 @@ public class FileController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    FileRepository fileRepository;
 
     @GetMapping(value = "/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<FileDto> getUsersFiles(Principal principal) throws Exception {
-        return new ResponseEntity<>(sharingService.getUserFiles(principal.getName()), HttpStatus.OK);
+    public ResponseEntity<FileDto> getUsersFiles() throws Exception {
+        return new ResponseEntity<>(sharingService.getUserFiles(), HttpStatus.OK);
     }
 
     @GetMapping("/file/{fileId}")
     public ResponseEntity<byte[]> getFileById(@PathVariable String fileId) throws IOException {
-        return sharingService.downloadFileByFileId(fileId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_PLAIN)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileRepository.findById(Integer.valueOf(fileId)) + "\"")
+                .body(sharingService.downloadFileByFileId(fileId));
     }
 
     @PostMapping(value = "/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile, Principal user) throws IOException, UserNotFoundException {
-        return sharingService.uploadFile(uploadedFile, user.getName());
+    public String uploadFile(@RequestParam("file") MultipartFile uploadedFile) throws IOException, CustomException {
+        return sharingService.uploadFile(uploadedFile);
     }
 
     @PostMapping(value = "/share", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public void shareFile(@RequestParam(name = "name") String ownerEmail, @RequestParam(name = "id") String fileId) throws FileNotFoundException, UserNotFoundException {
+    public void shareFile(@RequestParam(name = "name") String ownerEmail, @RequestParam(name = "id") String fileId) throws FileNotFoundException, CustomException {
         sharingService.shareFile(ownerEmail, fileId);
-
     }
 }

@@ -12,7 +12,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @Setter
 @Builder
-public class UserNotFoundException extends RuntimeException {
+public class CustomException extends RuntimeException {
     private HttpStatus httpStatus;
     private String message;
+
 }

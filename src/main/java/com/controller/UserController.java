@@ -2,7 +2,7 @@ package com.controller;
 
 
 import com.dto.UserDto;
-import com.exception.UserAlreadyRegisterException;
+import com.exception.CustomException;
 import com.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,9 +22,8 @@ public class UserController {
     @PostMapping("register")
     @ResponseStatus(HttpStatus.CREATED)
     public void register(@RequestBody UserDto userDto) {
-        if (userService.register(userDto)) {
-            return;
+        if (!userService.register(userDto)) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, USER_ALREADY_REGISTER_EXCEPTION_OR_INVALID_DATA);
         }
-        throw new UserAlreadyRegisterException(HttpStatus.BAD_REQUEST, USER_ALREADY_REGISTER_EXCEPTION_OR_INVALID_DATA);
     }
 }
