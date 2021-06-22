@@ -14,8 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FileDto {
-    public List<FileDto> shared;
-    public List<FileDto> hidden;
     private Integer fileId;
     private String fileName;
     private boolean isShared;

@@ -32,7 +32,8 @@ download userFile.
 
 This endpoint will be used by userFile owner to share access to the userFile with other users. Only the userFile owner can give the
 access to his userFile.
-
+Parameter `name` should contain you current email via you\`re authorized in. 
+Parameter `id` should contain id of file that you`re want to share.
 #### Security
 
 All endpoint secured by basic auth. User password encrypted with `BCryptPasswordEncoder` .

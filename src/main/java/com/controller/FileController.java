@@ -1,7 +1,7 @@
 package com.controller;
 
 
-import com.dto.FileDto;
+import com.dto.FilesDto;
 import com.exception.CustomException;
 import com.repository.FileRepository;
 import com.service.FileService;
@@ -37,7 +37,8 @@ public class FileController {
     FileRepository fileRepository;
 
     @GetMapping(value = "/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<FileDto> getUsersFiles() throws Exception {
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<FilesDto> getUsersFiles() {
         return new ResponseEntity<>(sharingService.getUserFiles(), HttpStatus.OK);
     }
 

@@ -2,6 +2,7 @@ package com.service;
 
 
 import com.dto.FileDto;
+import com.dto.FilesDto;
 import com.entity.User;
 import com.entity.UserFile;
 import com.exception.CustomException;
@@ -30,7 +31,14 @@ import java.util.stream.Collectors;
 public class FilesSharingServiceImpl implements FileService {
 
 
-    private static final Path FILE_STORAGE_LOCATION = Paths.get("src/files");
+    private static final Path ROOT_PATH = Paths.get("src/files");
+    private static final String FILES_STORAGE_LOCATION = String.valueOf(Paths.get(ROOT_PATH + "/%s"));
+
+    private static final String USER_NOT_FOUND_MESSAGE = "No such user";
+    private static final String ACCESS_DENIED_MESSAGE = "Access denied";
+    private static final String FILE_NOT_FOUND_MESSAGE = "File not found";
+    private static final String FILE_EXISTS_MESSAGE = "File exists";
+    private static final String SHARING_FILE_FORBIDDEN_MESSAGE = "Sharing this file is forbidden for you";
 
     @Autowired
     FileRepository fileRepository;
@@ -41,11 +49,12 @@ public class FilesSharingServiceImpl implements FileService {
     @Autowired
     ModelMapper modelMapper;
 
+
     @Override
-    public FileDto getUserFiles() {
+    public FilesDto getUserFiles() {
         Optional<User> optionalUser = userRepository.findByEmail(checkAuthenticationAndReturnEmail());
         if (!optionalUser.isPresent()) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "no such user");
+            throw new CustomException(HttpStatus.BAD_REQUEST, USER_NOT_FOUND_MESSAGE);
         }
         User user = optionalUser.get();
         List<FileDto> sharedFiles = user.getOwned().stream()
@@ -56,10 +65,7 @@ public class FilesSharingServiceImpl implements FileService {
                 .filter(userFile -> !userFile.isShared())
                 .map(userFile -> modelMapper.map(userFile, FileDto.class))
                 .collect(Collectors.toList());
-        if (sharedFiles.isEmpty() && hiddenFiles.isEmpty()) {
-            throw new CustomException(HttpStatus.OK, "no files to show");
-        }
-        return FileDto.builder()
+        return FilesDto.builder()
                 .shared(sharedFiles)
                 .hidden(hiddenFiles)
                 .build();
@@ -69,52 +75,51 @@ public class FilesSharingServiceImpl implements FileService {
     public byte[] downloadFileByFileId(String fileId) throws IOException {
         Optional<UserFile> fileOptional = fileRepository.findById(Integer.valueOf(fileId));
         Optional<User> optionalUser = userRepository.findByEmail(checkAuthenticationAndReturnEmail());
-            if (optionalUser.isPresent() && fileOptional.isPresent()) {
-                if (fileOptional.get().isShared() || fileOptional.get().getUser().equals(optionalUser.get())) {
-                    Path path = Paths.get(String.valueOf(FILE_STORAGE_LOCATION));
-                    return Files.readAllBytes(Paths.get(path + "/" + fileOptional.get().getFileName()));
-                }
-            } else {
-                throw new CustomException(HttpStatus.FORBIDDEN, " Access denied");
+        if (optionalUser.isPresent() && fileOptional.isPresent()) {
+            if (fileOptional.get().isShared() || fileOptional.get().getUser().equals(optionalUser.get())) {
+                return Files.readAllBytes(Paths.get(String.format(FILES_STORAGE_LOCATION, fileOptional.get().getFileName())));
             }
-        throw new CustomException(HttpStatus.BAD_REQUEST, "file doesnt exists");
+        } else {
+            throw new CustomException(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+        throw new CustomException(HttpStatus.BAD_REQUEST, FILE_NOT_FOUND_MESSAGE);
     }
 
     @Override
     public String uploadFile(MultipartFile uploadedFile) throws IOException {
         Optional<User> optionalUser = userRepository.findByEmail(checkAuthenticationAndReturnEmail());
-        if (optionalUser.isPresent()) {
-            if (Objects.equals(uploadedFile.getContentType(), MediaType.TEXT_PLAIN_VALUE)) {
-                if (!uploadedFile.isEmpty()) {
-                    File directory = new File(String.valueOf(FILE_STORAGE_LOCATION));
-                    if (isDirectoryExists(directory)) {
-                        Path path = Files.createFile(Paths.get(FILE_STORAGE_LOCATION + "/" + uploadedFile.getOriginalFilename()));
-                        Files.write(path, uploadedFile.getBytes());
-                        UserFile userFile = UserFile.builder()
-                                .isShared(false)
-                                .fileName(uploadedFile.getOriginalFilename())
-                                .user(optionalUser.get())
-                                .build();
-                        UserFile savedFile = fileRepository.save(userFile);
-                        return "File id: " + savedFile.getFileId();
-                    }
-                }
+        if (!optionalUser.isPresent()) {
+            throw new CustomException(HttpStatus.FORBIDDEN, USER_NOT_FOUND_MESSAGE);
+        }
+        if (Objects.equals(uploadedFile.getContentType(), MediaType.TEXT_PLAIN_VALUE) && !uploadedFile.isEmpty()) {
+            File directory = new File(String.valueOf(ROOT_PATH));
+            if (isDirectoryExists(directory)) {
+                Path path = Files.createFile(Paths.get(String.format(FILES_STORAGE_LOCATION, uploadedFile.getOriginalFilename())));
+                Files.write(path, uploadedFile.getBytes());
+                UserFile userFile = UserFile.builder()
+                        .isShared(false)
+                        .fileName(uploadedFile.getOriginalFilename())
+                        .user(optionalUser.get())
+                        .build();
+                userFile = fileRepository.save(userFile);
+                return "File id: " + userFile.getFileId();
             }
         }
-        return "File already exists";
+        return FILE_EXISTS_MESSAGE;
     }
 
     @Override
     public void shareFile(String ownerEmail, String fileId) {
         Optional<UserFile> optionalFile = fileRepository.findById(Integer.valueOf(fileId));
         Optional<User> optionalUser = userRepository.findByEmail(ownerEmail);
-        if (optionalUser.isPresent() && optionalFile.isPresent() &&
-                optionalUser.get().getEmail().equals(checkAuthenticationAndReturnEmail())) {
-            optionalFile.get().setShared(true);
-            fileRepository.save(optionalFile.get());
-            return;
+        if (!optionalUser.isPresent() || !optionalFile.isPresent() ||
+                !optionalUser.get().getEmail().equals(checkAuthenticationAndReturnEmail())
+                || !optionalFile.get().getUser().getEmail().equals(ownerEmail)) {
+            throw new CustomException(HttpStatus.FORBIDDEN, SHARING_FILE_FORBIDDEN_MESSAGE);
         }
-        throw new CustomException(HttpStatus.FORBIDDEN, "You cannot share this file or request invalid params");
+        UserFile file = optionalFile.get();
+        file.setShared(true);
+        fileRepository.save(file);
     }
 
     private boolean isDirectoryExists(File directory) {
@@ -129,6 +134,6 @@ public class FilesSharingServiceImpl implements FileService {
         if (authentication.isAuthenticated()) {
             return authentication.getName();
         }
-        throw new CustomException(HttpStatus.FORBIDDEN, "Access denied");
+        throw new CustomException(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
     }
 }

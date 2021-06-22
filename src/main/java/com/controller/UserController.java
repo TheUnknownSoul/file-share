@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 @RestController
 public class UserController {
-    private static final String USER_ALREADY_REGISTER_EXCEPTION_OR_INVALID_DATA = "user exists";
+    private static final String USER_ALREADY_REGISTER_EXCEPTION_OR_INVALID_DATA = "User exists";
     @Autowired
     private UserService userService;
 

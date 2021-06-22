@@ -1,8 +1,7 @@
 package com.service;
 
-import com.dto.FileDto;
+import com.dto.FilesDto;
 import com.exception.CustomException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileNotFoundException;
@@ -10,7 +9,7 @@ import java.io.IOException;
 
 
 public interface FileService {
-    FileDto getUserFiles() throws Exception;
+    FilesDto getUserFiles();
 
     byte[] downloadFileByFileId(String fileId) throws IOException;
 
